@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import Webcam from "react-webcam";
+import { useDispatch } from "react-redux";
 import { ReactMic } from "react-mic";
 import {
   ArrowLeft,
@@ -9,11 +10,12 @@ import {
   CircleStop,
   Aperture,
 } from "lucide-react";
-import { useNavigate } from 'react-router-dom';
-
+import { setNewQR } from "../redux/actions/actions";
+import { useNavigate } from "react-router-dom";
 
 export default function HomePage() {
   const webcamRef = useRef(null);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const [record, setRecord] = useState(false);
@@ -62,6 +64,8 @@ export default function HomePage() {
   }, []);
 
   const handleNewQrCode = () => {
+    console.log("call");
+    dispatch(setNewQR("yes"));
     navigate("/");
   };
 

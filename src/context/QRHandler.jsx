@@ -2,12 +2,17 @@ import PropTypes from "prop-types";
 import { useState, useEffect } from "react";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import { toast } from "sonner";
+import { useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import LayoutWrapper from "../components/ui/layout/LayoutWrapper";
 import { post } from "../utils/apiHelper";
 import { setQrToken, setQrDetail } from "../redux/actions/actions";
 import { useNavigate } from "react-router-dom";
 
 const QRHandler = ({ children }) => {
+  const { newQr } = useSelector((state) => state.visitor);
+  const dispatch = useDispatch();
+
   const [token, setToken] = useState(null);
   const [qrFetchSuccess, setQRFetchSuccess] = useState(true);
   const [scanQROn, setScanQROn] = useState(true);
@@ -17,19 +22,21 @@ const QRHandler = ({ children }) => {
     try {
       const response = await post("/qr-details", { token: token });
       if (response.success === 1) {
-        setQrDetail({
-          gate: response.data.gate,
-          apartment: response.data.apartment,
-        });
-        setQrToken(token);
+        dispatch(
+          setQrDetail({
+            gate: response.data.gate,
+            apartment: response.data.apartment,
+          })
+        );
+        dispatch(setQrToken(token));
         setQRFetchSuccess(true);
       } else {
-        setQrToken("");
+        dispatch(setQrToken(""));
         setQRFetchSuccess(false);
         toast.error("Failed to fetch QR details. Please try again later.");
       }
     } catch (e) {
-      setQrToken("");
+      dispatch(setQrToken(""));
       // setQRFetchSuccess(false);
       console.error("Error fetching QR details", e);
     }
@@ -53,7 +60,7 @@ const QRHandler = ({ children }) => {
           );
         } else {
           setToken(urlToken);
-          setQrToken(urlToken);
+          dispatch(setQrToken(urlToken));
           navigate(`/?token=${urlToken}`);
         }
       } else {
@@ -78,8 +85,9 @@ const QRHandler = ({ children }) => {
     const urlToken = queryParams.get("token");
     if (urlToken) {
       setToken(urlToken);
+      navigate(`/?token=${urlToken}`);
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     if (token) {
@@ -89,6 +97,12 @@ const QRHandler = ({ children }) => {
       setScanQROn(true);
     }
   }, [token]);
+
+  useEffect(() => {
+    if (newQr && newQr === "yes") {
+      setScanQROn(true);
+    }
+  }, [newQr]);
 
   return (
     <LayoutWrapper>
