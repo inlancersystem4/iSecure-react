@@ -38,7 +38,7 @@ export default function HomePage() {
         return prevIndex;
       });
     },
-    [questions.length]
+    [questions]
   );
 
   const handleToggleRecording = useCallback(() => {
@@ -64,19 +64,30 @@ export default function HomePage() {
   }, []);
 
   const handleNewQrCode = () => {
-    console.log("call");
     dispatch(setNewQR("yes"));
     navigate("/");
   };
 
   const capture = useCallback(() => {
     const imageSrc = webcamRef.current.getScreenshot();
-    setQuestions((prevQuestions) => {
-      const updatedQuestions = [...prevQuestions];
-      updatedQuestions[questionIndex].image_answer = imageSrc;
-      return updatedQuestions;
-    });
-    changeQuestionIndex(1);
+    if (imageSrc) {
+      const byteString = atob(imageSrc.split(",")[1]);
+      const mimeString = imageSrc.split(",")[0].split(":")[1].split(";")[0];
+
+      const arrayBuffer = new Uint8Array(byteString.length);
+      for (let i = 0; i < byteString.length; i++) {
+        arrayBuffer[i] = byteString.charCodeAt(i);
+      }
+      const binaryFile = new Blob([arrayBuffer], { type: mimeString });
+
+      setQuestions((prevQuestions) => {
+        const updatedQuestions = [...prevQuestions];
+        updatedQuestions[questionIndex].image_answer = binaryFile;
+        return updatedQuestions;
+      });
+
+      changeQuestionIndex(1);
+    }
   }, [webcamRef, questionIndex, changeQuestionIndex]);
 
   const renderQuestionContent = () => {
