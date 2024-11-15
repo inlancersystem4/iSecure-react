@@ -5,11 +5,13 @@ import { toast } from "sonner";
 import LayoutWrapper from "../components/ui/layout/LayoutWrapper";
 import { post } from "../utils/apiHelper";
 import { setQrToken, setQrDetail } from "../redux/actions/actions";
+import { useNavigate } from "react-router-dom";
 
 const QRHandler = ({ children }) => {
   const [token, setToken] = useState(null);
   const [qrFetchSuccess, setQRFetchSuccess] = useState(true);
-  const [scanQROn, setScanQROn] = useState(false);
+  const [scanQROn, setScanQROn] = useState(true);
+  const navigate = useNavigate();
 
   async function qrDetailsFetch(token) {
     try {
@@ -35,23 +37,24 @@ const QRHandler = ({ children }) => {
 
   const handleScan = (data) => {
     const rawValue = data[0].rawValue;
-    console.log(rawValue);
 
     if (rawValue) {
       const decodedUrl = decodeURIComponent(rawValue);
 
-      const urlToken = new URLSearchParams(data).get("token");
+      const url = new URL(decodedUrl);
+      const urlToken = url.searchParams.get("token");
 
       if (urlToken) {
-        setToken(urlToken);
-
         const url = new URL(decodedUrl);
         const domain = url.hostname;
-
         if (domain !== import.meta.env.VITE_DOMAIN) {
           toast.error(
             "Error: The URL domain does not match the expected domain."
           );
+        } else {
+          setToken(urlToken);
+          setQrToken(urlToken);
+          navigate(`/?token=${urlToken}`);
         }
       } else {
         toast.error("Error: No token found in the URL.");
@@ -63,6 +66,11 @@ const QRHandler = ({ children }) => {
 
   const handleError = (err) => {
     console.error("QR Scan Error:", err);
+    if (err.name === "OverconstrainedError") {
+      toast.error(
+        "Overconstrained error: Please check your camera settings or permissions."
+      );
+    }
   };
 
   useEffect(() => {

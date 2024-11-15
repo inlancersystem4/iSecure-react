@@ -9,9 +9,12 @@ import {
   CircleStop,
   Aperture,
 } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
+
 
 export default function HomePage() {
   const webcamRef = useRef(null);
+  const navigate = useNavigate();
 
   const [record, setRecord] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -57,6 +60,10 @@ export default function HomePage() {
   const handleResetQuestions = useCallback(() => {
     setQuestionIndex(0);
   }, []);
+
+  const handleNewQrCode = () => {
+    navigate("/");
+  };
 
   const capture = useCallback(() => {
     const imageSrc = webcamRef.current.getScreenshot();
@@ -118,7 +125,7 @@ export default function HomePage() {
           <button className="btn" onClick={handleResetQuestions}>
             <RotateCcw size={18} />
           </button>
-          <button className="btn">
+          <button className="btn" onClick={handleNewQrCode}>
             <QrCode size={18} />
           </button>
         </div>
