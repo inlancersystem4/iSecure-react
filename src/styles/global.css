@@ -45,6 +45,11 @@ body {
 
 .full-page .body {
   height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .full-page .footer {
@@ -77,4 +82,23 @@ body {
   display: flex;
   align-items: stretch;
   gap: 16px;
+}
+
+.controls .btn {
+  min-width: 72px;
+  min-height: 72px;
+  max-width: 72px;
+  max-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  background-color: transparent;
+  border-radius: 999px;
+  -webkit-border-radius: 999px;
+  -moz-border-radius: 999px;
+  -ms-border-radius: 999px;
+  -o-border-radius: 999px;
+  margin-left: auto;
+  margin-right: auto;
 }
