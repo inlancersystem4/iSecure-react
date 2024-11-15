@@ -8,7 +8,12 @@ import store from "./redux/store";
 
 createRoot(document.getElementById("root")).render(
   <Provider store={store}>
-    <Toaster position="top-center" />
+    <Toaster
+      position="top-center"
+      toastOptions={{
+        className: "toast",
+      }}
+    />
     <BrowserRouter
       future={{
         v7_relativeSplatPath: true,

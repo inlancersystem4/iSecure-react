@@ -110,3 +110,8 @@ body {
   height: 100dvh;
   width: 100%;
 }
+
+.toast {
+  padding: 8px;
+  gap: 4px;
+}

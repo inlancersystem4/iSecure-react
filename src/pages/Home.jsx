@@ -1,6 +1,7 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Webcam from "react-webcam";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { ReactMic } from "react-mic";
 import {
   ArrowLeft,
@@ -11,87 +12,101 @@ import {
   Aperture,
 } from "lucide-react";
 import { setNewQR } from "../redux/actions/actions";
-import { useNavigate } from "react-router-dom";
+import { post } from "../utils/apiHelper";
 
 export default function HomePage() {
-  const webcamRef = useRef(null);
+  const { qrDetails } = useSelector((state) => state.visitor);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const webcamRef = useRef(null);
+  const questionIndexRef = useRef(0);
 
   const [record, setRecord] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [questions, setQuestions] = useState([
-    { id: 0, answer_file: "" },
+    { id: 0, image_answer: null },
     { id: 1, question: "What is your Name?", answer_file: "" },
     { id: 2, question: "Flat Owner Name?", answer_file: "" },
     { id: 3, question: "Flat Number or Flat Owner Name?", answer_file: "" },
     { id: 4, question: "Reason of Visit?", answer_file: "" },
   ]);
 
+  useEffect(() => {
+    questionIndexRef.current = questionIndex;
+  }, [questionIndex]);
+
+  const handleFileUpload = async (file, index) => {
+    try {
+      const response = await post("/qr-details", {
+        process_id: index,
+        society_id: qrDetails.apartment,
+        gate_id: qrDetails.gate,
+        media_file: file,
+      });
+      if (response.success !== 1) {
+        console.error("Failed to send file:", response);
+      }
+    } catch (error) {
+      console.error("Error sending file:", error);
+    }
+  };
+
+  const handleCapture = useCallback(() => {
+    const imageSrc = webcamRef.current?.getScreenshot();
+    if (imageSrc) {
+      setQuestions((prevQuestions) => {
+        const updatedQuestions = [...prevQuestions];
+        updatedQuestions[0].image_answer = imageSrc;
+        return updatedQuestions;
+      });
+
+      handleFileUpload(imageSrc, 0);
+      setTimeout(() => changeQuestionIndex(1), 100);
+    }
+  }, [handleFileUpload]);
+
+  const handleRecordingStop = useCallback(
+    (file) => {
+      const currentIndex = questionIndexRef.current;
+      setQuestions((prevQuestions) => {
+        const updatedQuestions = [...prevQuestions];
+        updatedQuestions[currentIndex].answer_file = file;
+        return updatedQuestions;
+      });
+
+      handleFileUpload(file, currentIndex);
+      setTimeout(() => changeQuestionIndex(1), 100);
+    },
+    [handleFileUpload]
+  );
+
   const changeQuestionIndex = useCallback(
     (increment) => {
       setQuestionIndex((prevIndex) => {
         const nextIndex = prevIndex + increment;
-        if (nextIndex >= 0 && nextIndex < questions.length) {
-          return nextIndex;
-        }
-        return prevIndex;
+        return nextIndex >= 0 && nextIndex < questions.length
+          ? nextIndex
+          : prevIndex;
       });
     },
-    [questions]
+    [questions.length]
   );
 
   const handleToggleRecording = useCallback(() => {
-    setRecord((prev) => !prev);
+    setRecord((prevRecord) => !prevRecord);
   }, []);
 
-  const onStop = useCallback(
-    (file) => {
-      setQuestions((prevQuestions) => {
-        const updatedQuestions = [...prevQuestions];
-        updatedQuestions[questionIndex].answer_file = file;
-        console.log(updatedQuestions);
-        return updatedQuestions;
-      });
-
-      changeQuestionIndex(1);
-    },
-    [questionIndex, changeQuestionIndex]
-  );
-
-  const handleResetQuestions = useCallback(() => {
-    setQuestionIndex(0);
-  }, []);
+  const handleResetQuestions = () => setQuestionIndex(0);
 
   const handleNewQrCode = () => {
     dispatch(setNewQR("yes"));
     navigate("/");
   };
 
-  const capture = useCallback(() => {
-    const imageSrc = webcamRef.current.getScreenshot();
-    if (imageSrc) {
-      const byteString = atob(imageSrc.split(",")[1]);
-      const mimeString = imageSrc.split(",")[0].split(":")[1].split(";")[0];
-
-      const arrayBuffer = new Uint8Array(byteString.length);
-      for (let i = 0; i < byteString.length; i++) {
-        arrayBuffer[i] = byteString.charCodeAt(i);
-      }
-      const binaryFile = new Blob([arrayBuffer], { type: mimeString });
-
-      setQuestions((prevQuestions) => {
-        const updatedQuestions = [...prevQuestions];
-        updatedQuestions[questionIndex].image_answer = binaryFile;
-        return updatedQuestions;
-      });
-
-      changeQuestionIndex(1);
-    }
-  }, [webcamRef, questionIndex, changeQuestionIndex]);
-
   const renderQuestionContent = () => {
     const currentQuestion = questions[questionIndex];
+
     if (currentQuestion.id === 0) {
       return (
         <Webcam
@@ -100,8 +115,7 @@ export default function HomePage() {
           screenshotFormat="image/jpeg"
           width="100%"
           videoConstraints={{ facingMode: "user" }}
-          onUserMediaError={() => console.log("Error accessing camera")}
-          onScreenshot={(imageData) => onStop(imageData)}
+          onUserMediaError={() => console.error("Error accessing camera")}
         />
       );
     }
@@ -109,9 +123,11 @@ export default function HomePage() {
     return (
       <>
         <h3>{currentQuestion.question}</h3>
-        {currentQuestion.audio_answer && (
+        {currentQuestion.answer_file?.blob && (
           <audio controls>
-            <source src={currentQuestion.audio_answer} />
+            <source
+              src={URL.createObjectURL(currentQuestion.answer_file.blob)}
+            />
             Your browser does not support the audio element.
           </audio>
         )}
@@ -128,8 +144,8 @@ export default function HomePage() {
 
   return (
     <div className="full-page">
-      <div className="header">
-        {questionIndex != 0 ? (
+      <header className="header">
+        {questionIndex > 0 ? (
           <button className="btn" onClick={() => changeQuestionIndex(-1)}>
             <ArrowLeft size={18} />
           </button>
@@ -144,14 +160,14 @@ export default function HomePage() {
             <QrCode size={18} />
           </button>
         </div>
-      </div>
+      </header>
 
-      <div className="body">{renderQuestionContent()}</div>
+      <main className="body">{renderQuestionContent()}</main>
 
-      <div className="footer">
-        {questionIndex == 0 ? (
+      <footer className="footer">
+        {questionIndex === 0 ? (
           <div className="controls">
-            <button className="btn" onClick={capture}>
+            <button className="btn" onClick={handleCapture}>
               <Aperture />
             </button>
           </div>
@@ -159,7 +175,7 @@ export default function HomePage() {
           <>
             <ReactMic
               record={record}
-              onStop={onStop}
+              onStop={handleRecordingStop}
               strokeColor="#FF0000"
               backgroundColor="#000000"
             />
@@ -170,7 +186,7 @@ export default function HomePage() {
             </div>
           </>
         )}
-      </div>
+      </footer>
     </div>
   );
 }
