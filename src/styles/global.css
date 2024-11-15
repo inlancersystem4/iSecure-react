@@ -115,3 +115,22 @@ body {
   padding: 8px;
   gap: 4px;
 }
+
+.footer .btn-full {
+  width: 100%;
+  background-color: transparent;
+  border: 1px solid var(--border);
+  padding: 12px 24px;
+  border-radius: 12px;
+  -webkit-border-radius: 12px;
+  -moz-border-radius: 12px;
+  -ms-border-radius: 12px;
+  -o-border-radius: 12px;
+}
+
+.body .user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  align-items: center;
+}

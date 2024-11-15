@@ -12,7 +12,6 @@ const visitorReducer = createReducer(initialState, (builder) => {
     state.qrToken = action.payload;
   });
   builder.addCase(setNewQR, (state, action) => {
-    console.log(action);
     state.newQr = action.payload;
   });
   builder.addCase(setQrDetail, (state, action) => {

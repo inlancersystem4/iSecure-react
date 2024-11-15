@@ -14,22 +14,26 @@ const QRHandler = ({ children }) => {
   const dispatch = useDispatch();
 
   const [token, setToken] = useState(null);
-  const [qrFetchSuccess, setQRFetchSuccess] = useState(true);
+  const [qrFetchSuccess, setQRFetchSuccess] = useState(false);
   const [scanQROn, setScanQROn] = useState(true);
   const navigate = useNavigate();
 
   async function qrDetailsFetch(token) {
+    const from_data = new FormData();
+    from_data.append("gate_token", token);
     try {
-      const response = await post("/qr-details", { token: token });
+      const response = await post("/info/society-info", from_data);
       if (response.success === 1) {
         dispatch(
           setQrDetail({
-            gate: response.data.gate,
-            apartment: response.data.apartment,
+            gate: response.data.id,
+            apartment: response.data.society_id,
           })
         );
         dispatch(setQrToken(token));
+        navigate(`/?token=${token}`);
         setQRFetchSuccess(true);
+        setScanQROn(false);
       } else {
         dispatch(setQrToken(""));
         setQRFetchSuccess(false);
@@ -37,7 +41,7 @@ const QRHandler = ({ children }) => {
       }
     } catch (e) {
       dispatch(setQrToken(""));
-      // setQRFetchSuccess(false);
+      setQRFetchSuccess(false);
       console.error("Error fetching QR details", e);
     }
   }
@@ -60,8 +64,7 @@ const QRHandler = ({ children }) => {
           );
         } else {
           setToken(urlToken);
-          dispatch(setQrToken(urlToken));
-          navigate(`/?token=${urlToken}`);
+          qrDetailsFetch(urlToken);
         }
       } else {
         toast.error("Error: No token found in the URL.");
@@ -111,7 +114,7 @@ const QRHandler = ({ children }) => {
       ) : qrFetchSuccess ? (
         <div>{children}</div>
       ) : (
-        <div>Loading...</div>
+        <div>Something wrong</div>
       )}
     </LayoutWrapper>
   );
