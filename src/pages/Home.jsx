@@ -3,6 +3,7 @@ import Webcam from "react-webcam";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { ReactMic } from "react-mic";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   QrCode,
@@ -37,19 +38,37 @@ export default function HomePage() {
   }, [questionIndex]);
 
   const handleFileUpload = async (file, index) => {
+    const from_data = new FormData();
+    from_data.append("process_id", index);
+    from_data.append("society_id", qrDetails.apartment);
+    from_data.append("gate_id", qrDetails.gate);
+    from_data.append("media_file", file);
     try {
-      const response = await post("/qr-details", {
-        process_id: index,
-        society_id: qrDetails.apartment,
-        gate_id: qrDetails.gate,
-        media_file: file,
-      });
-      if (response.success !== 1) {
-        console.error("Failed to send file:", response);
+      const response = await post("/step/check-step-process", from_data);
+      if (response.success == 1) {
+        setTimeout(() => changeQuestionIndex(1), 100);
+      } else {
+        toast.error("something wrong...");
       }
     } catch (error) {
       console.error("Error sending file:", error);
     }
+  };
+
+  const base64ToBlob = (base64, mimeType) => {
+    const byteCharacters = atob(base64.split(",")[1]);
+    const byteArrays = [];
+
+    for (let offset = 0; offset < byteCharacters.length; offset += 1024) {
+      const slice = byteCharacters.slice(offset, offset + 1024);
+      const byteNumbers = new Array(slice.length);
+      for (let i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+      byteArrays.push(new Uint8Array(byteNumbers));
+    }
+
+    return new Blob(byteArrays, { type: mimeType });
   };
 
   const handleCapture = useCallback(() => {
@@ -61,25 +80,39 @@ export default function HomePage() {
         return updatedQuestions;
       });
 
-      handleFileUpload(imageSrc, 0);
-      setTimeout(() => changeQuestionIndex(1), 100);
+      const mimeType = "image/jpeg";
+      const imageBlob = base64ToBlob(imageSrc, mimeType);
+
+      const file = new File([imageBlob], "image.jpg", { type: mimeType });
+      handleFileUpload(file, 1);
     }
-  }, [handleFileUpload]);
+  }, []);
 
-  const handleRecordingStop = useCallback(
-    (file) => {
-      const currentIndex = questionIndexRef.current;
-      setQuestions((prevQuestions) => {
-        const updatedQuestions = [...prevQuestions];
-        updatedQuestions[currentIndex].answer_file = file;
-        return updatedQuestions;
+  const handleRecordingStop = useCallback((file) => {
+    console.log(file);
+    const { blobURL, options } = file;
+
+    const blob = fetch(blobURL)
+      .then((response) => response.blob())
+      .then((blob) => {
+        const mimeType = options.mimeType || "audio/webm";
+        const audioFile = new File([blob], "audio_recording.webm", {
+          type: mimeType,
+        });
+
+        const currentIndex = questionIndexRef.current + 1;
+
+        setQuestions((prevQuestions) => {
+          const updatedQuestions = [...prevQuestions];
+          updatedQuestions[currentIndex].answer_file = audioFile;
+          return updatedQuestions;
+        });
+        handleFileUpload(audioFile, currentIndex);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch the blob URL", err);
       });
-
-      handleFileUpload(file, currentIndex);
-      setTimeout(() => changeQuestionIndex(1), 100);
-    },
-    [handleFileUpload]
-  );
+  }, []);
 
   const changeQuestionIndex = useCallback(
     (increment) => {
@@ -107,7 +140,7 @@ export default function HomePage() {
   const renderQuestionContent = () => {
     const currentQuestion = questions[questionIndex];
 
-    if (currentQuestion.id === 0) {
+    if (currentQuestion.id == 0) {
       return (
         <Webcam
           audio={false}

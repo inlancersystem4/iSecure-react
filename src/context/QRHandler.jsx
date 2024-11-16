@@ -7,7 +7,7 @@ import { useSelector } from "react-redux";
 import LayoutWrapper from "../components/ui/layout/LayoutWrapper";
 import { post } from "../utils/apiHelper";
 import { setQrToken, setQrDetail } from "../redux/actions/actions";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const QRHandler = ({ children }) => {
   const { newQr } = useSelector((state) => state.visitor);
@@ -15,12 +15,16 @@ const QRHandler = ({ children }) => {
 
   const [token, setToken] = useState(null);
   const [qrFetchSuccess, setQRFetchSuccess] = useState(false);
+  const [loader, setLoader] = useState(false);
+
   const [scanQROn, setScanQROn] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   async function qrDetailsFetch(token) {
     const from_data = new FormData();
     from_data.append("gate_token", token);
+    setLoader(true);
     try {
       const response = await post("/info/society-info", from_data);
       if (response.success === 1) {
@@ -34,14 +38,19 @@ const QRHandler = ({ children }) => {
         navigate(`/?token=${token}`);
         setQRFetchSuccess(true);
         setScanQROn(false);
+        setLoader(false);
       } else {
         dispatch(setQrToken(""));
+        setScanQROn(true);
+        setLoader(false);
         setQRFetchSuccess(false);
         toast.error("Failed to fetch QR details. Please try again later.");
       }
     } catch (e) {
       dispatch(setQrToken(""));
+      setLoader(false);
       setQRFetchSuccess(false);
+      setScanQROn(true);
       console.error("Error fetching QR details", e);
     }
   }
@@ -109,12 +118,16 @@ const QRHandler = ({ children }) => {
 
   return (
     <LayoutWrapper>
-      {scanQROn ? (
+      {loader ? (
+        <div>Loading...</div>
+      ) : location.pathname == "/response" ? (
+        <div>{children}</div>
+      ) : scanQROn ? (
         <Scanner delay={300} onError={handleError} onScan={handleScan} />
       ) : qrFetchSuccess ? (
         <div>{children}</div>
       ) : (
-        <div>Something wrong</div>
+        <div>Something went wrong</div>
       )}
     </LayoutWrapper>
   );
