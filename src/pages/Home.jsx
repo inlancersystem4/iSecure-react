@@ -30,7 +30,7 @@ export default function HomePage() {
     { id: 0, image_answer: null },
     { id: 1, question: "What is your Name?", answer_file: "" },
     { id: 2, question: "Flat Owner Name?", answer_file: "" },
-    { id: 3, question: "Flat Number or Flat Owner Name?", answer_file: "" },
+    { id: 3, question: "Flat Number?", answer_file: "" },
     { id: 4, question: "Reason of Visit?", answer_file: "" },
   ]);
 
@@ -48,7 +48,11 @@ export default function HomePage() {
     try {
       const response = await post("/step/check-step-process", from_data);
       if (response.success == 1) {
-        setTimeout(() => changeQuestionIndex(1), 100);
+        if (response.data.id === "5") {
+          navigate("/response");
+        } else {
+          setTimeout(() => changeQuestionIndex(1), 100);
+        }
       } else {
         toast.error(response.message);
         setTimeout(() => changeQuestionIndex(1), 100);
@@ -94,7 +98,6 @@ export default function HomePage() {
   }, []);
 
   const handleRecordingStop = useCallback((file) => {
-    console.log(file);
     const { blobURL, options } = file;
 
     const blob = fetch(blobURL)

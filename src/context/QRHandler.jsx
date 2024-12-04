@@ -12,7 +12,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 const QRHandler = ({ children }) => {
   const { newQr } = useSelector((state) => state.visitor);
   const dispatch = useDispatch();
-  console.log("newQr from Redux:", newQr);
 
   const [token, setToken] = useState(null);
   const [qrFetchSuccess, setQRFetchSuccess] = useState(false);
@@ -115,9 +114,7 @@ const QRHandler = ({ children }) => {
   }, [token]);
 
   useEffect(() => {
-    console.log("newQr value:", newQr);
     if (newQr === "yes" || newQr == "yes") {
-      console.log("Setting scan QR on");
       setScanQROn(true);
     }
   }, [newQr]);
