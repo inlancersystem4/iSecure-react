@@ -17,7 +17,6 @@ html,
 body {
   font-family: "Inter", sans-serif;
   font-weight: 500;
-  background-color: var(--background);
 }
 
 .main-layout {
@@ -26,6 +25,7 @@ body {
   margin-left: auto;
   margin-right: auto;
   position: relative;
+  background-color: var(--background);
   border-left: 1px solid var(--border);
   border-right: 1px solid var(--border);
 }
@@ -187,14 +187,12 @@ body {
 
 .footer .btn-full {
   width: 100%;
-  background-color: transparent;
-  border: 1px solid var(--border);
+  font-family: "Inter", sans-serif;
+  font-weight: 600;
+  background-color: #eeeeee;
   padding: 12px 24px;
-  border-radius: 12px;
-  -webkit-border-radius: 12px;
-  -moz-border-radius: 12px;
-  -ms-border-radius: 12px;
-  -o-border-radius: 12px;
+  border: 1px solid transparent;
+  font-size: 18px;
 }
 
 .body .user-details {
@@ -202,6 +200,15 @@ body {
   flex-direction: column;
   gap: 32px;
   align-items: center;
+}
+
+.body .user-details h1,
+.body .user-details h4 {
+  text-align: center;
+}
+
+.body .user-details h1 {
+  margin-bottom: 8px;
 }
 
 .loader-message {

@@ -27,35 +27,53 @@ export default function HomePage() {
   const [loader, setLoader] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [questions, setQuestions] = useState([
-    { id: 0, image_answer: null },
-    { id: 1, question: "What is your Name?", answer_file: "" },
-    { id: 2, question: "Flat Owner Name?", answer_file: "" },
-    { id: 3, question: "Flat Number?", answer_file: "" },
-    { id: 4, question: "Reason of Visit?", answer_file: "" },
+    { id: 0, setp: "visitor_img", image_answer: null },
+    {
+      id: 1,
+      setp: "visitor_name",
+      question: "What is your Name?",
+      answer_file: "",
+    },
+    {
+      id: 2,
+      setp: "flat_owner_name",
+      question: "Flat Owner Name?",
+      answer_file: "",
+    },
+    { id: 3, setp: "flat_number", question: "Flat Number?", answer_file: "" },
+    {
+      id: 4,
+      setp: "reason",
+      question: "Reason of Visit?",
+      answer_file: "",
+    },
   ]);
 
   useEffect(() => {
     questionIndexRef.current = questionIndex;
   }, [questionIndex]);
 
-  const handleFileUpload = async (file, index) => {
+  const handleFileUpload = async () => {
     setLoader(true);
-    const from_data = new FormData();
-    from_data.append("process_id", index);
-    from_data.append("society_id", qrDetails.apartment);
-    from_data.append("gate_id", qrDetails.gate);
-    from_data.append("media_file", file);
+    const transformedQuestions = questions.map((question) => {
+      return {
+        step: question.setp,
+        answer: question.answer_file || question.image_answer || "",
+      };
+    });
+
+    const form_data = new FormData();
+    form_data.append("society_id", qrDetails.apartment);
+    form_data.append("gate_id", qrDetails.gate);
+    transformedQuestions.forEach((question) => {
+      form_data.append(`${question.step}`, question.answer);
+    });
     try {
-      const response = await post("/step/check-step-process", from_data);
+      const response = await post("/step/bulk-step-process", form_data);
       if (response.success == 1) {
-        if (response.data.id === "5") {
-          navigate("/response");
-        } else {
-          setTimeout(() => changeQuestionIndex(1), 100);
-        }
+        navigate("/response");
       } else {
         toast.error(response.message);
-        setTimeout(() => changeQuestionIndex(1), 100);
       }
     } catch (error) {
       console.error("Error sending file:", error);
@@ -80,24 +98,24 @@ export default function HomePage() {
     return new Blob(byteArrays, { type: mimeType });
   };
 
-  const handleCapture = useCallback(() => {
+  const handleCapture = () => {
     const imageSrc = webcamRef.current?.getScreenshot();
     if (imageSrc) {
-      setQuestions((prevQuestions) => {
-        const updatedQuestions = [...prevQuestions];
-        updatedQuestions[0].image_answer = imageSrc;
-        return updatedQuestions;
-      });
-
       const mimeType = "image/jpeg";
       const imageBlob = base64ToBlob(imageSrc, mimeType);
 
       const file = new File([imageBlob], "image.jpg", { type: mimeType });
-      handleFileUpload(file, 1);
-    }
-  }, []);
 
-  const handleRecordingStop = useCallback((file) => {
+      setQuestions((prevQuestions) => {
+        const updatedQuestions = [...prevQuestions];
+        updatedQuestions[0].image_answer = file;
+        return updatedQuestions;
+      });
+      setTimeout(() => changeQuestionIndex(1), 100);
+    }
+  };
+
+  const handleRecordingStop = (file) => {
     const { blobURL, options } = file;
 
     const blob = fetch(blobURL)
@@ -107,20 +125,23 @@ export default function HomePage() {
         const audioFile = new File([blob], "audio_recording.webm", {
           type: mimeType,
         });
-
-        const currentIndex = questionIndexRef.current + 1;
+        const currentIndex = questionIndexRef.current;
 
         setQuestions((prevQuestions) => {
           const updatedQuestions = [...prevQuestions];
           updatedQuestions[currentIndex].answer_file = audioFile;
           return updatedQuestions;
         });
-        handleFileUpload(audioFile, currentIndex);
+
+        if (currentIndex == 4) {
+          setTimeout(() => handleFileUpload(), 100);
+        }
+        setTimeout(() => changeQuestionIndex(1), 100);
       })
       .catch((err) => {
         console.error("Failed to fetch the blob URL", err);
       });
-  }, []);
+  };
 
   const changeQuestionIndex = useCallback(
     (increment) => {
