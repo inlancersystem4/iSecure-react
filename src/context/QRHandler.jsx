@@ -6,12 +6,13 @@ import { useDispatch } from "react-redux";
 import { useSelector } from "react-redux";
 import LayoutWrapper from "../components/ui/layout/LayoutWrapper";
 import { post } from "../utils/apiHelper";
-import { setQrToken, setQrDetail } from "../redux/actions/actions";
+import { setQrToken, setQrDetail, setNewQR } from "../redux/actions/actions";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const QRHandler = ({ children }) => {
   const { newQr } = useSelector((state) => state.visitor);
   const dispatch = useDispatch();
+  console.log("newQr from Redux:", newQr);
 
   const [token, setToken] = useState(null);
   const [qrFetchSuccess, setQRFetchSuccess] = useState(false);
@@ -27,7 +28,7 @@ const QRHandler = ({ children }) => {
     setLoader(true);
     try {
       const response = await post("/info/society-info", from_data);
-      if (response.success === 1) {
+      if (response.success == 1) {
         dispatch(
           setQrDetail({
             gate: response.data.id,
@@ -35,12 +36,14 @@ const QRHandler = ({ children }) => {
           })
         );
         dispatch(setQrToken(token));
+        dispatch(setNewQR(""));
         navigate(`/?token=${token}`);
         setQRFetchSuccess(true);
         setScanQROn(false);
         setLoader(false);
       } else {
         dispatch(setQrToken(""));
+        dispatch(setNewQR(""));
         setScanQROn(true);
         setLoader(false);
         setQRFetchSuccess(false);
@@ -49,6 +52,7 @@ const QRHandler = ({ children }) => {
     } catch (e) {
       dispatch(setQrToken(""));
       setLoader(false);
+      dispatch(setNewQR(""));
       setQRFetchSuccess(false);
       setScanQROn(true);
       console.error("Error fetching QR details", e);
@@ -111,7 +115,9 @@ const QRHandler = ({ children }) => {
   }, [token]);
 
   useEffect(() => {
-    if (newQr && newQr === "yes") {
+    console.log("newQr value:", newQr);
+    if (newQr === "yes" || newQr == "yes") {
+      console.log("Setting scan QR on");
       setScanQROn(true);
     }
   }, [newQr]);
@@ -119,11 +125,28 @@ const QRHandler = ({ children }) => {
   return (
     <LayoutWrapper>
       {loader ? (
-        <div>Loading...</div>
+        <div className="full-page">
+          <div className="qr-logo">
+            <img src="/logo.png" alt="" width="180px" />
+          </div>
+          <div className="body border-y">
+            <div>Please Wait a Second 😊😊</div>
+          </div>
+        </div>
       ) : location.pathname == "/response" ? (
         <div>{children}</div>
       ) : scanQROn ? (
-        <Scanner delay={300} onError={handleError} onScan={handleScan} />
+        <div className="full-page">
+          <div className="qr-logo">
+            <img src="/logo.png" alt="" width="180px" />
+          </div>
+          <div className="body border-y">
+            <Scanner delay={300} onError={handleError} onScan={handleScan} />
+          </div>
+          <div className="qr-scan-title">
+            <h1>Scann QR Code</h1>
+          </div>
+        </div>
       ) : qrFetchSuccess ? (
         <div>{children}</div>
       ) : (
