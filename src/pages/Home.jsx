@@ -73,9 +73,12 @@ export default function HomePage() {
       if (response.success == 1) {
         navigate("/response");
       } else {
+        setQuestionIndex(0);
         toast.error(response.message);
       }
     } catch (error) {
+      toast.info("Something is Wrong...");
+      setQuestionIndex(0);
       console.error("Error sending file:", error);
     } finally {
       setLoader(false);

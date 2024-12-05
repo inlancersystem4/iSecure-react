@@ -137,7 +137,7 @@ const QRHandler = ({ children }) => {
           <div className="qr-logo">
             <img src="/logo.png" alt="" width="180px" />
           </div>
-          <div className="body border-y">
+          <div className="body scanner border-y">
             <Scanner delay={300} onError={handleError} onScan={handleScan} />
           </div>
           <div className="qr-scan-title">

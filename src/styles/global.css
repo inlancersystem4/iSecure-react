@@ -248,3 +248,8 @@ body {
   align-items: center;
   justify-content: center;
 }
+
+.scanner video {
+  position: absolute;
+  height: auto;
+}
