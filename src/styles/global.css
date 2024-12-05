@@ -251,5 +251,5 @@ body {
 
 .scanner video {
   position: absolute;
-  height: auto;
+  height: auto !important;
 }
