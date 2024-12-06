@@ -1,4 +1,21 @@
+import { useEffect } from "react";
+import { useSocket } from "../context/SocketProvider";
+
 export default function ResponsePage() {
+  const { socket } = useSocket();
+
+  useEffect(() => {
+    if (socket) {
+      socket.on("message", (msg) => {
+        console.log("Received message:", msg);
+      });
+
+      return () => {
+        socket.off("message");
+      };
+    }
+  }, [socket]);
+
   return (
     <div className="full-page">
       <div className="header"></div>
