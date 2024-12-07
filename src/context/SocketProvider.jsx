@@ -26,12 +26,10 @@ export const SocketProvider = ({ children }) => {
     socketInstance.connect();
 
     socketInstance.on("connect", () => {
-      console.log("Connected to the socket server.");
       setIsConnected(true);
     });
 
     socketInstance.on("disconnect", () => {
-      console.log("Disconnected from the socket server.");
       setIsConnected(false);
     });
 

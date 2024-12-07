@@ -12,7 +12,7 @@ import {
   CircleStop,
   Aperture,
 } from "lucide-react";
-import { setNewQR } from "../redux/actions/actions";
+import { setNewQR, setvisitorID } from "../redux/actions/actions";
 import { post } from "../utils/apiHelper";
 
 export default function HomePage() {
@@ -71,6 +71,7 @@ export default function HomePage() {
     try {
       const response = await post("/step/bulk-step-process", form_data);
       if (response.success == 1) {
+        dispatch(setvisitorID(response.data.visitor_id));
         navigate("/response");
       } else {
         setQuestionIndex(0);

@@ -1,10 +1,16 @@
 import { createReducer } from "@reduxjs/toolkit";
-import { setQrToken, setNewQR , setQrDetail } from "../actions/actions";
+import {
+  setQrToken,
+  setNewQR,
+  setQrDetail,
+  setvisitorID,
+} from "../actions/actions";
 
 const initialState = {
   qrToken: localStorage.getItem("qrToken"),
   newQr: "",
   qrDetails: "",
+  visitorID: "",
 };
 
 const visitorReducer = createReducer(initialState, (builder) => {
@@ -16,6 +22,9 @@ const visitorReducer = createReducer(initialState, (builder) => {
   });
   builder.addCase(setQrDetail, (state, action) => {
     state.qrDetails = action.payload;
+  });
+  builder.addCase(setvisitorID, (state, action) => {
+    state.visitorID = action.payload;
   });
 });
 
